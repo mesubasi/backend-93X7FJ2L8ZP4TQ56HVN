@@ -4,6 +4,7 @@ import {
   Get,
   HttpException,
   HttpStatus,
+  Param,
   Patch,
   Post,
   Query,
@@ -47,7 +48,14 @@ export class UserController {
   }
 
   @Get(':id')
-  async getUserID(@Query('id') id: string) {}
+  async getUserID(@Param('id') id: string) {
+    try {
+      const user = await this.userService.getOnlyUser(id);
+      return user;
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   @Patch('update')
   async updateUser() {}
