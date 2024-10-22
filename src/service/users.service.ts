@@ -1,6 +1,14 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import { Pool } from 'pg';
+import * as bcrypt from 'bcrypt';
+import { UserList } from 'src/controller/users.controller';
 dotenv.config();
 
 @Injectable()
@@ -14,14 +22,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         host: process.env.DB_HOST,
         database: process.env.DB_DATABASE,
         password: process.env.DB_PASSWORD,
-        port: process.env.DB_PORT,
+        port: +process.env.DB_PORT,
       });
       await this.pool.connect();
 
       const checkTable = await this.pool.query(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
-          WHERE table_name = 'User'
+          WHERE table_name = 'users'
         );
       `);
       const tableExists = checkTable.rows[0].exists;
@@ -38,7 +46,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
             country VARCHAR(255),
             district VARCHAR(255),  
             role VARCHAR(50),       
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, 
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP 
           );
         `;
@@ -61,5 +69,54 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     } catch (err) {
       console.log('DB Bağlantısı kesilirken bir sorun oluştu!', err);
     }
+  }
+
+  async createUser(userData: UserList) {
+    const emailCheck = await this.pool.query(
+      `SELECT * FROM users WHERE email = $1`,
+      [userData.email],
+    );
+
+    if (emailCheck.rows.length > 0) {
+      throw new HttpException(
+        'Bu Email Adresi Kullanımda',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    const query = `
+        INSERT INTO users (
+          name,
+          surname,
+          email,
+          password,
+          phone,
+          age,
+          country,
+          district,
+          role
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, name, surname, email, phone, age, country, district, role, created_at
+      `;
+
+    const values = [
+      userData.name,
+      userData.surname,
+      userData.email,
+      hashedPassword,
+      userData.phone || null,
+      userData.age || null,
+      userData.country || null,
+      userData.district || null,
+      userData.role || 'user',
+    ];
+
+    const result = await this.pool.query(query, values);
+
+    return {
+      message: 'Kullanıcı başarıyla kaydedildi',
+    };
   }
 }
