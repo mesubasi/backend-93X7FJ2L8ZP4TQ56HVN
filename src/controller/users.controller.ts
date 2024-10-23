@@ -5,8 +5,8 @@ import {
   HttpException,
   HttpStatus,
   Param,
-  Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { UserService } from '../service/users.service';
@@ -53,10 +53,23 @@ export class UserController {
       const user = await this.userService.getOnlyUser(id);
       return user;
     } catch (err) {
-      console.log(err);
+      throw new HttpException(
+        'Kullanıcı getirilirken bir hata oluştu!',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
-  @Patch('update')
-  async updateUser() {}
+  @Put('update/:id')
+  async updateUser(@Param('id') id: string, @Body() userData: UserList) {
+    try {
+      const result = await this.userService.updateUser(id, userData);
+      return result;
+    } catch (err) {
+      throw new HttpException(
+        'Veri güncellenirken bir hata oluştu!',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
