@@ -1,6 +1,4 @@
 import {
-  HttpCode,
-  HttpException,
   HttpStatus,
   Injectable,
   OnModuleDestroy,
@@ -10,7 +8,24 @@ import * as dotenv from 'dotenv';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 import { UserList } from 'src/controller/users.controller';
+import * as Chance from 'chance';
 dotenv.config();
+
+const chance = new Chance();
+
+interface MockUser {
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+  phone: string;
+  age: number;
+  country: string;
+  district: string;
+  role: string;
+  created_at: Date;
+  updated_at: Date;
+}
 
 @Injectable()
 export class UserService implements OnModuleInit, OnModuleDestroy {
@@ -55,6 +70,10 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         console.log('Yeni tablo başarıyla oluşturuldu');
       } else {
         console.log('Tablo zaten mevcut');
+      }
+
+      for (let i = 0; i < 10; i++) {
+        await this.randomMockUser();
       }
     } catch (err) {
       console.log("DB'ye bağlanırken bir sorun oluştu!", err);
@@ -156,5 +175,42 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  async randomMockUser() {
+    const mockUser: MockUser = {
+      name: chance.first(),
+      surname: chance.last(),
+      email: chance.email(),
+      password: chance.string({ length: 8 }),
+      phone: chance.phone(),
+      age: chance.age(),
+      country: chance.country({ full: true }),
+      district: chance.city(),
+      role: chance.pickone(['admin', 'user']),
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    const query = `
+    INSERT INTO users (name, surname, email, password, phone, age, country, district, role, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+  `;
+
+    const values = [
+      mockUser.name,
+      mockUser.surname,
+      mockUser.email,
+      await bcrypt.hash(mockUser.password, 10),
+      mockUser.phone,
+      mockUser.age,
+      mockUser.country,
+      mockUser.district,
+      mockUser.role,
+      mockUser.created_at,
+      mockUser.updated_at,
+    ];
+
+    await this.pool.query(query, values);
   }
 }
