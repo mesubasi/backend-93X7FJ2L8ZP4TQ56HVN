@@ -1,4 +1,5 @@
 import {
+  HttpException,
   HttpStatus,
   Injectable,
   OnModuleDestroy,
@@ -23,8 +24,8 @@ interface MockUser {
   country: string;
   district: string;
   role: string;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 @Injectable()
@@ -53,17 +54,17 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         const createTable = `
           CREATE TABLE users (
             id SERIAL PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            surname VARCHAR(255) NOT NULL,
-            email VARCHAR(255) UNIQUE NOT NULL,
+            name VARCHAR(255),
+            surname VARCHAR(255),
+            email VARCHAR(255) UNIQUE,
             password VARCHAR(255),
             phone VARCHAR(20),
             age VARCHAR(10),
             country VARCHAR(255),
             district VARCHAR(255),  
             role VARCHAR(50),       
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, 
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP 
+            createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, 
+            updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP 
           );
         `;
         await this.pool.query(createTable);
@@ -72,7 +73,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         console.log('Tablo zaten mevcut');
       }
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 5; i++) {
         await this.randomMockUser();
       }
     } catch (err) {
@@ -118,7 +119,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
           district,
           role
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, name, surname, email, phone, age, country, district, role, created_at
+        RETURNING id, name, surname, email, phone, age, country, district, role, createdAt
       `;
 
     const values = [
@@ -144,17 +145,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     try {
       const query = `
     SELECT 
-      id, 
-      name, 
-      surname, 
-      email, 
-      phone, 
-      age, 
-      country, 
-      district, 
-      role, 
-      created_at, 
-      updated_at 
+     *
     FROM users 
     WHERE id = $1
   `;
@@ -182,18 +173,18 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       name: chance.first(),
       surname: chance.last(),
       email: chance.email(),
-      password: chance.string({ length: 8 }),
-      phone: chance.phone(),
+      password: chance.string(),
+      phone: chance.phone({ formatted: false, mobile: true }),
       age: chance.age(),
       country: chance.country({ full: true }),
       district: chance.city(),
       role: chance.pickone(['admin', 'user']),
-      created_at: new Date(),
-      updated_at: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const query = `
-    INSERT INTO users (name, surname, email, password, phone, age, country, district, role, created_at, updated_at)
+    INSERT INTO users (name, surname, email, password, phone, age, country, district, role, createdAt, updatedAt)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
   `;
 
@@ -207,10 +198,61 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       mockUser.country,
       mockUser.district,
       mockUser.role,
-      mockUser.created_at,
-      mockUser.updated_at,
+      mockUser.createdAt,
+      mockUser.updatedAt,
     ];
 
     await this.pool.query(query, values);
+  }
+
+  async updateUser(id: string, userData: UserList) {
+    try {
+      const query = `
+    UPDATE users
+    SET 
+      name = COALESCE($1, name),
+        surname = COALESCE($2, surname),
+        email = COALESCE($3, email),
+        password = COALESCE($4, password),
+        phone = COALESCE($5, phone),
+        age = COALESCE($6, age),
+        country = COALESCE($7, country),
+        district = COALESCE($8, district),
+        role = COALESCE($9, role),
+        updatedAt = CURRENT_TIMESTAMP
+    WHERE id = $10
+    RETURNING id, name, surname, email, password, phone, age, country, district, role, updatedAt
+  `;
+
+      const values = [
+        userData.name,
+        userData.surname,
+        userData.email,
+        userData.password,
+        userData.phone,
+        userData.age,
+        userData.country,
+        userData.district,
+        userData.role,
+        id,
+      ];
+
+      const result = await this.pool.query(query, values);
+      console.log(result.rowCount);
+
+      if (result.rowCount === 0) {
+        return {
+          status: HttpStatus.NOT_FOUND,
+          message: 'Kullanıcı Bulunamadı',
+        };
+      }
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Kullanıcı başarıyla güncellendi',
+      };
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
