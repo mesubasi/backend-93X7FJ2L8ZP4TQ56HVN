@@ -183,6 +183,18 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       updatedAt: new Date(),
     };
 
+    const emailCheck = await this.pool.query(
+      `SELECT * FROM users WHERE email = $1`,
+      [mockUser.email],
+    );
+
+    if (emailCheck.rows.length > 0) {
+      return {
+        statusCode: 403,
+        message: 'Bu Email Adresi Kullanımda!',
+      };
+    }
+
     const query = `
     INSERT INTO users (name, surname, email, password, phone, age, country, district, role, createdAt, updatedAt)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -228,7 +240,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         userData.name,
         userData.surname,
         userData.email,
-        userData.password,
+        await bcrypt.hash(userData.password, 10),
         userData.phone,
         userData.age,
         userData.country,
@@ -238,7 +250,6 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       ];
 
       const result = await this.pool.query(query, values);
-      console.log(result.rowCount);
 
       if (result.rowCount === 0) {
         return {
