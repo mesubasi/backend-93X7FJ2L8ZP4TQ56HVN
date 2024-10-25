@@ -94,7 +94,7 @@
       ]
    ----------------------------------------------------------------------
    HTTP Metodu: PUT
-   Açıklama: id yerine ilgili kullanıcının verilerini Body ile göndererek güncelleyebilirsiniz 
+   Açıklama: id yerine ilgili kullanıcının verilerini Body ile göndererek güncelleyebilirsiniz
    Request Url: http://localhost:3000/users/update/id
    Body (JSON):
    {
@@ -102,5 +102,5 @@
     "surname" : "TEST",
     "password" : "123",
     "email" : "testertest@gmail.com"
-  }
+   }
    ```
