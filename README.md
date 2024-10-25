@@ -1,6 +1,6 @@
-# Backend Programming Assignment
+# Fullstack Programlama Görevi
 
-## Installation
+## Yükleme
 
 1. **Repository'i klonlayın:**
 
