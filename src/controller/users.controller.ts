@@ -29,10 +29,24 @@ export class UserController {
 
   @Get()
   async getAllUsers(
-    @Query('page') page: string,
-    @Query('pageSize') pageSize: string,
+    @Query('page') page: number,
+    @Query('pageSize') pageSize: number,
     @Query('search') search?: string,
-  ) {}
+  ) {
+    try {
+      const result = await this.userService.getUsersForPagination(
+        page,
+        pageSize,
+        search,
+      );
+      return result;
+    } catch (err) {
+      throw new HttpException(
+        'Verileri Çağrılırken Bir Sorun Oluştu!',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Post('save')
   async saveUser(@Body() userData: UserList) {

@@ -43,6 +43,18 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       });
       await this.pool.connect();
 
+      const checkDatabase = await this.pool.query(
+        `SELECT datname FROM pg_database WHERE lower(datname) = lower($1)`,
+        ['postgres'],
+      );
+
+      if (!checkDatabase.rows.length) {
+        await this.pool.query(`CREATE DATABASE postgres`);
+        console.log('Veritabanı başarıyla oluşturuldu');
+      } else {
+        console.log('Veritabanı zaten mevcut');
+      }
+
       const checkTable = await this.pool.query(`
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
@@ -92,15 +104,81 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  //GET Method - Page, pageSize ve search(Opsiyonel) parametre ile veriye erişim
+  async getUsersForPagination(page: number, pageSize: number, search?: string) {
+    try {
+      const validPage = Math.max(1, page);
+      const offset = (validPage - 1) * pageSize;
+      const searchTerm = search ? `%${search.trim()}%` : undefined;
+
+      const searchQuery = search
+        ? `WHERE 
+        LOWER(name) ILIKE $3 OR 
+        LOWER(surname) ILIKE $3 OR 
+        LOWER(email) ILIKE $3 OR 
+        LOWER(phone) ILIKE $3 OR 
+        LOWER(country) ILIKE $3 OR 
+        LOWER(district) ILIKE $3`
+        : '';
+
+      const query = `
+        SELECT * FROM users 
+        ${searchQuery}
+        ORDER BY id
+        LIMIT $1 OFFSET $2
+      `;
+
+      const countQuery = `
+  SELECT COUNT(*) FROM users 
+  ${
+    search
+      ? `WHERE 
+        LOWER(name) ILIKE $1 OR 
+        LOWER(surname) ILIKE $1 OR 
+        LOWER(email) ILIKE $1 OR 
+        LOWER(phone) ILIKE $1 OR 
+        LOWER(country) ILIKE $1 OR 
+        LOWER(district) ILIKE $1`
+      : ''
+  }
+`;
+
+      const queryParams = searchTerm
+        ? [pageSize, offset, searchTerm]
+        : [pageSize, offset];
+
+      const userResults = await this.pool.query(query, queryParams);
+
+      const countParams = searchTerm ? [searchTerm] : [];
+
+      const countResults = await this.pool.query(countQuery, countParams);
+
+      const totalItems = parseInt(countResults.rows[0].count, 10);
+      const totalPages = Math.ceil(totalItems / pageSize);
+
+      return {
+        status: HttpStatus.OK,
+        data: userResults.rows || [],
+        page,
+        pageSize,
+        totalPages,
+        totalItems,
+      };
+    } catch (err) {
+      console.log('Pagination İşleminde Bir Problem Oluştu!', err);
+    }
+  }
+
+  //POST Method - Kullanıcı Oluşturma
   async createUser(userData: UserList) {
     const emailCheck = await this.pool.query(
-      `SELECT * FROM users WHERE email = $1`,
+      `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`,
       [userData.email],
     );
 
-    if (emailCheck.rows.length > 0) {
+    if (emailCheck.rows[0].exists) {
       return {
-        statusCode: 403,
+        status: HttpStatus.CONFLICT,
         message: 'Bu Email Adresi Kullanımda!',
       };
     }
@@ -141,6 +219,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
+  //GET Method - ID ile Tek Kullanıcı Getirme
   async getOnlyUser(id: string) {
     try {
       const query = `
@@ -168,6 +247,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  //Random Mock Kullanıcı Oluşturma
   async randomMockUser() {
     const mockUser: MockUser = {
       name: chance.first(),
@@ -184,13 +264,13 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     };
 
     const emailCheck = await this.pool.query(
-      `SELECT * FROM users WHERE email = $1`,
+      `SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)`,
       [mockUser.email],
     );
 
-    if (emailCheck.rows.length > 0) {
+    if (emailCheck.rows[0].exists) {
       return {
-        statusCode: 403,
+        status: HttpStatus.CONFLICT,
         message: 'Bu Email Adresi Kullanımda!',
       };
     }
@@ -217,6 +297,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     await this.pool.query(query, values);
   }
 
+  //PUT Method - Kullanıcı Güncelleme
   async updateUser(id: string, userData: UserList) {
     try {
       const query = `
