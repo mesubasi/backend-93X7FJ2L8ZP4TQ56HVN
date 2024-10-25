@@ -25,7 +25,7 @@
    DB_PORT = // 5432 - default
    ```
 
-4. **Start the development server:**
+4. **Projeyi başlatın:**
 
    ```sh
    yarn start
