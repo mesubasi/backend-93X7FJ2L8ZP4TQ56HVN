@@ -12,7 +12,13 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from '../service/users.service';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateUsersDto } from 'src/dto/create-users.dto';
 import { UpdateUsersDto } from 'src/dto/update-users.dto';
 
@@ -28,6 +34,7 @@ export interface UserList {
   role: string;
 }
 
+@ApiTags('Kullanıcı İşlemleri')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -49,12 +56,11 @@ export class UserController {
     @Query('search') search?: string,
   ) {
     try {
-      const result = await this.userService.getUsersForPagination(
+      return await this.userService.getUsersForPagination(
         page,
         pageSize,
         search,
       );
-      return result;
     } catch (err) {
       throw new HttpException(
         'Verileri Çağrılırken Bir Sorun Oluştu!',
@@ -86,8 +92,7 @@ export class UserController {
   @ApiResponse({ status: 400, description: 'Böyle Bir Kullanıcı Bulunamadı!' })
   async getUserID(@Param('id') id: string) {
     try {
-      const user = await this.userService.getOnlyUser(id);
-      return user;
+      return await this.userService.getOnlyUser(id);
     } catch (err) {
       throw new HttpException(
         'Kullanıcı getirilirken bir hata oluştu!',
@@ -107,8 +112,7 @@ export class UserController {
     updateUsersDto: UpdateUsersDto,
   ) {
     try {
-      const result = await this.userService.updateUser(id, userData);
-      return result;
+      return await this.userService.updateUser(id, userData);
     } catch (err) {
       throw new HttpException(
         'Veri güncellenirken bir hata oluştu!',
