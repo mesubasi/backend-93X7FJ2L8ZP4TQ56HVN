@@ -2,30 +2,66 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUsersDto {
-  @ApiProperty({ description: 'Kullanıcının adı', required: true })
+  @ApiProperty({
+    example: 'john',
+    description: 'Kullanıcının adı',
+    required: true,
+  })
   name: string;
 
-  @ApiProperty({ description: 'Kullanıcının soyadı', required: true })
+  @ApiProperty({
+    example: 'doe',
+    description: 'Kullanıcının soyadı',
+    required: true,
+  })
   surname: string;
 
-  @ApiProperty({ description: 'Kullanıcının e-posta adresi', required: true })
+  @ApiProperty({
+    example: 'johndoe@example.com',
+    description: 'Kullanıcının e-posta adresi',
+    required: true,
+  })
   email: string;
 
-  @ApiProperty({ description: 'Kullanıcının şifresi', required: true })
+  @ApiProperty({
+    example: '123456',
+    description: 'Kullanıcının şifresi',
+    required: true,
+  })
   password: string;
 
-  @ApiProperty({ description: 'Kullanıcının telefon numarası', required: true })
+  @ApiProperty({
+    example: '5554443322',
+    description: 'Kullanıcının telefon numarası',
+    required: true,
+  })
   phone: string;
 
-  @ApiProperty({ description: 'Kullanıcının yaşı', required: true })
+  @ApiProperty({
+    example: 23,
+    description: 'Kullanıcının yaşı',
+    required: true,
+  })
   age: number;
 
-  @ApiProperty({ description: 'Kullanıcının ülkesi', required: true })
+  @ApiProperty({
+    example: 'Germany',
+    description: 'Kullanıcının ülkesi',
+    required: true,
+  })
   country: string;
 
-  @ApiProperty({ description: 'Kullanıcının ilçesi', required: true })
+  @ApiProperty({
+    example: 'Berlin',
+    description: 'Kullanıcının ilçesi',
+    required: true,
+  })
   district: string;
 
-  @ApiProperty({ description: 'Kullanıcının rolü', required: true })
+  @ApiProperty({
+    example: 'user',
+    description: 'Kullanıcının rolü',
+    required: true,
+  })
   role: string;
 }
