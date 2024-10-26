@@ -33,6 +33,11 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @ApiOperation({
+    summary:
+      'Kullanıcıları Sayfa, Sayfa Numarası ve Search Parametresiyle Getir',
+  })
+  @ApiResponse({ status: 200, description: 'Kullanıcılar Başarıyla Getirildi' })
   @ApiQuery({
     name: 'search',
     required: false,
@@ -76,6 +81,8 @@ export class UserController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Varolan kullanıcıyı ID numarasıyla getir' })
+  @ApiResponse({ status: 200, description: 'Kullanıcı Başarıyla Getirildi' })
   async getUserID(@Param('id') id: string) {
     try {
       const user = await this.userService.getOnlyUser(id);
