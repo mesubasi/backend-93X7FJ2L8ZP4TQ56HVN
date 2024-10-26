@@ -64,9 +64,9 @@ export class UserController {
   }
 
   @Post('save')
-  @ApiOperation({ summary: 'Yeni kullanıcı oluşturur' })
-  @ApiResponse({ status: 201, description: 'Kullanıcı başarıyla oluşturuldu.' })
-  @ApiResponse({ status: 400, description: 'Geçersiz istek' })
+  @ApiOperation({ summary: 'Yeni Kullanıcı Oluştur' })
+  @ApiResponse({ status: 201, description: 'Kullanıcı Başarıyla Oluşturuldu.' })
+  @ApiResponse({ status: 409, description: 'Bu Email Adresi Kullanımda!' })
   @ApiBody({ type: CreateUsersDto })
   async saveUser(@Body() userData: UserList, createUsersDto: CreateUsersDto) {
     try {
@@ -81,8 +81,9 @@ export class UserController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Varolan kullanıcıyı ID numarasıyla getir' })
+  @ApiOperation({ summary: 'Varolan Kullanıcıyı ID Numarasıyla Getir' })
   @ApiResponse({ status: 200, description: 'Kullanıcı Başarıyla Getirildi' })
+  @ApiResponse({ status: 400, description: 'Böyle Bir Kullanıcı Bulunamadı!' })
   async getUserID(@Param('id') id: string) {
     try {
       const user = await this.userService.getOnlyUser(id);
@@ -96,9 +97,9 @@ export class UserController {
   }
 
   @Put('update/:id')
-  @ApiOperation({ summary: 'Mevcut Kullanıcıyı Günceller' })
+  @ApiOperation({ summary: 'Mevcut Kullanıcıyı Güncelle' })
   @ApiResponse({ status: 200, description: 'Kullanıcı Başarıyla Güncellendi!' })
-  @ApiResponse({ status: 400, description: 'Geçersiz İstek' })
+  @ApiResponse({ status: 404, description: 'Kullanıcı Bulunamadı!' })
   @ApiBody({ type: UpdateUsersDto })
   async updateUser(
     @Param('id') id: string,
