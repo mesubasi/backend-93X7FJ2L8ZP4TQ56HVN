@@ -104,3 +104,7 @@
     "email" : "testertest@gmail.com"
    }
    ```
+
+## Swagger UI Dökümantasyonu
+
+<p>Proje başlatıldıktan sonra http://localhost:3000/swagger adresinden ulaşılabilir</p>
