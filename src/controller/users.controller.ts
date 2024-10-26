@@ -1,3 +1,5 @@
+//users.controller.ts
+
 import {
   Body,
   Controller,
@@ -10,6 +12,9 @@ import {
   Query,
 } from '@nestjs/common';
 import { UserService } from '../service/users.service';
+import { ApiBody, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { CreateUsersDto } from 'src/dto/create-users.dto';
+import { UpdateUsersDto } from 'src/dto/update-users.dto';
 
 export interface UserList {
   name: string;
@@ -28,6 +33,11 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Opsiyonel arama parametresi',
+  })
   async getAllUsers(
     @Query('page') page: number,
     @Query('pageSize') pageSize: number,
@@ -49,7 +59,11 @@ export class UserController {
   }
 
   @Post('save')
-  async saveUser(@Body() userData: UserList) {
+  @ApiOperation({ summary: 'Yeni kullanıcı oluşturur' })
+  @ApiResponse({ status: 201, description: 'Kullanıcı başarıyla oluşturuldu.' })
+  @ApiResponse({ status: 400, description: 'Geçersiz istek' })
+  @ApiBody({ type: CreateUsersDto })
+  async saveUser(@Body() userData: UserList, createUsersDto: CreateUsersDto) {
     try {
       return await this.userService.createUser(userData);
     } catch (err) {
@@ -75,7 +89,15 @@ export class UserController {
   }
 
   @Put('update/:id')
-  async updateUser(@Param('id') id: string, @Body() userData: UserList) {
+  @ApiOperation({ summary: 'Mevcut Kullanıcıyı Günceller' })
+  @ApiResponse({ status: 200, description: 'Kullanıcı Başarıyla Güncellendi!' })
+  @ApiResponse({ status: 400, description: 'Geçersiz İstek' })
+  @ApiBody({ type: UpdateUsersDto })
+  async updateUser(
+    @Param('id') id: string,
+    @Body() userData: UserList,
+    updateUsersDto: UpdateUsersDto,
+  ) {
     try {
       const result = await this.userService.updateUser(id, userData);
       return result;
